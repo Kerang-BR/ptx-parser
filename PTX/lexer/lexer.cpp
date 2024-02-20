@@ -27,26 +27,30 @@ bool isType(std::string str) {
     return (std::regex_match(str, reg) || str == ".pred");
 }
 
+#include <sstream>
+extern std::stringstream FileStringStream;
+
 int getToken() {
     int currentToken = -1;
     char currChar;
     currStrVal = "";
 
-    while (isspace(currChar = getchar()));
+    while (isspace(currChar = FileStringStream.get()));
 
     if (isIdStartingChar(currChar) || currChar == '.') {
         currStrVal = string(1, currChar);
 
         // include the memory space conversions, e.g. .to.global
         while (
-            isIdChar(currChar = getchar()) ||
+            isIdChar(currChar = FileStringStream.get()) ||
             (currChar == '.' && currStrVal == ".to")
         ) {
             currStrVal += currChar;
         }
 
         // unread the last (invalid) character
-        ungetc(currChar, stdin);
+        // ungetc(currChar, stdin);
+        FileStringStream.unget();
 
 
         // check for directives
@@ -377,7 +381,7 @@ int getToken() {
 
         if (currChar == '-') {
             numStr += currChar;
-            currChar = getchar();
+            currChar = FileStringStream.get();
         }
 
         bool dotParsed = false;
@@ -398,10 +402,11 @@ int getToken() {
                 else dotParsed == true;
             }
             numStr += currChar;
-            currChar = getchar();
+            currChar = FileStringStream.get();
         }
 
-        ungetc(currChar, stdin);
+        // ungetc(currChar, stdin);
+        FileStringStream.unget();
 
         // Convert all possible types and formats to double
         std::string::size_type pos;
@@ -429,9 +434,9 @@ int getToken() {
     }
     else if (currChar == '@') {
         currStrVal = string(1, currChar);
-        if (isIdStartingChar(currChar = getchar())) {
+        if (isIdStartingChar(currChar = FileStringStream.get())) {
             currStrVal += currChar;
-            while (isIdChar(currChar = getchar())) {
+            while (isIdChar(currChar = FileStringStream.get())) {
                 currStrVal += currChar;
             }
 
@@ -440,15 +445,15 @@ int getToken() {
     }
     // comments
     else if (currChar == '/') {
-        char nextChar = getchar();
+        char nextChar = FileStringStream.get();
         bool commentEnd = false;
         if (nextChar == '/') {
-            while (getchar() != '\n');
+            while (FileStringStream.get() != '\n');
         }
         else if (nextChar == '*') {
             while (!commentEnd) {
-                while(getchar() != '*');
-                if (getchar() == '/') commentEnd = true;
+                while(FileStringStream.get() != '*');
+                if (FileStringStream.get() == '/') commentEnd = true;
             }
         }
     }

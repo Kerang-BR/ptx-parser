@@ -41,8 +41,8 @@
 #include "llvm/Analysis/LoopAnalysisManager.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "z3++.h"
-#include "z3.h"
+// #include "z3++.h"
+// #include "z3.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // #include "llvm/IRReader/IRReader.h"
@@ -207,7 +207,7 @@ bool isInstrToken(int token) {
 }
 
 // bool isAddress() {
-//     char nextChar = getchar();
+//     char nextChar = FileStringStream.get();
 //     bool isOpAddress = nextChar == ']';
 
 //     // Unread next character
@@ -638,11 +638,13 @@ void ParseKernelDirectStatement() {
 }
 
 void dump_statements() {
+    std::cout << "################ dump_statements-begin: ############ \n";
 
     for(auto const& statement : statements) {
         statement->dump();
         std::cout << std::endl;
     }
+    std::cout << "################ dump_statements-end: ############ \n\n";
 }
 
 Instruction* FindMulShlInUses(
@@ -862,7 +864,29 @@ std::string generateIndexVariable() {
     return "indexVar" + counter++;
 }
 
-int main() {
+#include <fstream>
+#include <string>
+#include <sstream>
+
+std::stringstream FileStringStream;
+
+int main(int argc, char** argv) {
+    // read files
+    if (argc != 2) {
+        std::cout << "Need ptx file.\n";
+        return 0;
+    }
+    std::string InputFileName = argv[1];
+
+    std::ifstream ptxFile(InputFileName);
+    if (!ptxFile) {
+        std::cout << "Open ptx file failed.\n";
+        return 0;
+    }
+    FileStringStream << ptxFile.rdbuf();
+    ptxFile.close();
+
+
     currentToken = getToken();
     while(currentToken != token_eof) {
         if (isInstrToken(currentToken) || currentToken == token_label || currentToken == token_pred)
@@ -896,8 +920,9 @@ int main() {
 
     PtxToLlvmIrConverter::Initialize();
 
-    // dump_statements();
+    dump_statements();
 
+# if 0
     for(auto statement : statements) {
         statement->ToLlvmIr();
     }
@@ -1433,71 +1458,72 @@ int main() {
             outs() << constraint << "\n\t";
         outs() << "\n";
 
-        z3::context solverContext;
-        z3::solver solver(solverContext);
+        // z3::context solverContext;
+        // z3::solver solver(solverContext);
 
 
-        // z3::expr x = solverContext.int_const("x");
-        // z3::expr y = solverContext.int_const("y");
-        // z3::expr i = solverContext.int_const("i");
-        // z3::expr_vector expr = solverContext.parse_string("(declare-const x Int)(declare-const y Int)(= (- x y) (+ x (- y) 1))");
-        // solver.from_string("(declare-const x Int)(declare-const y Int)(assert (= x y))");
-        // solver.add(expr);
-        // outs() << "Solver: " << solver << "\n";
-        // outs() << "Solver smt2: " << solver.to_smt2() << "\n";
-        // switch (solver.check()) {
-        //     case z3::unsat: outs() << "Not Satisfied!\n"; break;
-        //     case z3::sat: outs() << "Satisfied!\n"; break;
-        //     case z3::unknown: outs() << "No result\n"; break;
+        // // z3::expr x = solverContext.int_const("x");
+        // // z3::expr y = solverContext.int_const("y");
+        // // z3::expr i = solverContext.int_const("i");
+        // // z3::expr_vector expr = solverContext.parse_string("(declare-const x Int)(declare-const y Int)(= (- x y) (+ x (- y) 1))");
+        // // solver.from_string("(declare-const x Int)(declare-const y Int)(assert (= x y))");
+        // // solver.add(expr);
+        // // outs() << "Solver: " << solver << "\n";
+        // // outs() << "Solver smt2: " << solver.to_smt2() << "\n";
+        // // switch (solver.check()) {
+        // //     case z3::unsat: outs() << "Not Satisfied!\n"; break;
+        // //     case z3::sat: outs() << "Satisfied!\n"; break;
+        // //     case z3::unknown: outs() << "No result\n"; break;
+        // // }
+
+        // // define ceiling, min and max functions
+        // std::string z3Expr = "(define-fun ceiling ((x Real)) Int"
+        //     "(ite (>= (- x (to_real (to_int x))) 0.0) (to_int x) (+ (to_int x) 1)))\n";
+        // z3Expr += "(define-fun min2((x Int) (y Int)) Int (ite (< x y) x y))\n";
+        // z3Expr += "(define-fun max2((x Int) (y Int)) Int (ite (> x y) x y))\n";
+        // // Keep unique declarations and add them in z3 expression
+        // // std::unique(decls.begin(), decls.end());
+        // // for (std::string decl : decls)
+        // //     z3Expr += "(declare-const " + decl +" Int)";
+        // for (std::string constraint : constraints) {
+        //     // z3::expr_vector expression = solverContext.parse_string(constraint.c_str());
+        //     // solver.add(expression);
+        //     z3Expr += "(assert (" + constraint + "))\n";
+        // }
+        // z3Expr += "(check-sat)";
+        // // solver.from_string(z3Expr.c_str());
+        // // solverContext.check_parser_error();
+        // // z3::expr_vector expr = solverContext.parse_string(z3Expr.c_str());
+        // try {
+        //     // z3::expr i = solverContext.int_const("i");
+        //     // z3::expr_vector expr = solverContext.parse_string("(declare-const i Int)(assert (< i 0))(assert (> i 1))(check-sat)");
+        //     // z3::expr_vector expr = solverContext.parse_string("(declare-const i Int)(assert(< 0 i (bv2int (bvand ((_ int2bv 32) 16) ((_ int2bv 32) 3)))))");
+        //     std::string decls = "";
+        //     for (std::string loopVar : generatedVars)
+        //         decls += "(declare-const " + loopVar + " Int)\n";
+
+        //     z3Expr = decls + z3Expr;
+        //     outs() << "expr: " << z3Expr << "\n";
+        //     z3::expr_vector expr = solverContext.parse_string(z3Expr.c_str());
+        //     // solverContext.check_parser_error();
+        //     solver.add(expr);
+
+        //     // outs() << "Solver: " << solver << "\n";
+        //     outs() << "Solver smt2: " << solver.to_smt2() << "\n";
+        //     switch (solver.check()) {
+        //         case z3::unsat: outs() << "Not Satisfied!\n"; break;
+        //         case z3::sat: outs() << "Satisfied\n"; break;
+        //         case z3::unknown: outs() << "No result\n"; break;
+        //     }
+        // }
+        // catch(z3::exception& e) {
+        //     outs() << e.msg() << "\n";
         // }
 
-        // define ceiling, min and max functions
-        std::string z3Expr = "(define-fun ceiling ((x Real)) Int"
-            "(ite (>= (- x (to_real (to_int x))) 0.0) (to_int x) (+ (to_int x) 1)))\n";
-        z3Expr += "(define-fun min2((x Int) (y Int)) Int (ite (< x y) x y))\n";
-        z3Expr += "(define-fun max2((x Int) (y Int)) Int (ite (> x y) x y))\n";
-        // Keep unique declarations and add them in z3 expression
-        // std::unique(decls.begin(), decls.end());
-        // for (std::string decl : decls)
-        //     z3Expr += "(declare-const " + decl +" Int)";
-        for (std::string constraint : constraints) {
-            // z3::expr_vector expression = solverContext.parse_string(constraint.c_str());
-            // solver.add(expression);
-            z3Expr += "(assert (" + constraint + "))\n";
-        }
-        z3Expr += "(check-sat)";
-        // solver.from_string(z3Expr.c_str());
-        // solverContext.check_parser_error();
-        // z3::expr_vector expr = solverContext.parse_string(z3Expr.c_str());
-        try {
-            // z3::expr i = solverContext.int_const("i");
-            // z3::expr_vector expr = solverContext.parse_string("(declare-const i Int)(assert (< i 0))(assert (> i 1))(check-sat)");
-            // z3::expr_vector expr = solverContext.parse_string("(declare-const i Int)(assert(< 0 i (bv2int (bvand ((_ int2bv 32) 16) ((_ int2bv 32) 3)))))");
-            std::string decls = "";
-            for (std::string loopVar : generatedVars)
-                decls += "(declare-const " + loopVar + " Int)\n";
-
-            z3Expr = decls + z3Expr;
-            outs() << "expr: " << z3Expr << "\n";
-            z3::expr_vector expr = solverContext.parse_string(z3Expr.c_str());
-            // solverContext.check_parser_error();
-            solver.add(expr);
-
-            // outs() << "Solver: " << solver << "\n";
-            outs() << "Solver smt2: " << solver.to_smt2() << "\n";
-            switch (solver.check()) {
-                case z3::unsat: outs() << "Not Satisfied!\n"; break;
-                case z3::sat: outs() << "Satisfied\n"; break;
-                case z3::unknown: outs() << "No result\n"; break;
-            }
-        }
-        catch(z3::exception& e) {
-            outs() << e.msg() << "\n";
-        }
-
-        // if (expr.check_error() != Z3_error_code::Z3_OK) {
-        //     outs() << "Z3 expression error!" << "\n";
-        // }
+        // // if (expr.check_error() != Z3_error_code::Z3_OK) {
+        // //     outs() << "Z3 expression error!" << "\n";
+        // // }
 
     }
+#endif 
 }
